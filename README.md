@@ -48,12 +48,14 @@ sudo apt update`
 Install Zabbix server, frontend, agent
 
 Сперва поставим Postgresql
+
 `sudo apt install postgresql`
 
 ![screen4](https://github.com/KorolkovDenis/Zabbix/blob/main/Screenshots/z1/screen4.png)
 ![screen5](https://github.com/KorolkovDenis/Zabbix/blob/main/Screenshots/z1/screen5.png)
 
 `sudo apt install zabbix-server-pgsql zabbix-frontend-php php8.1-pgsql zabbix-nginx-conf zabbix-sql-scripts zabbix-agent2`
+
 В качестве zabbix-agent2 устанавливаем версию 2, так как она более современная! По инструкции с сайта берется zabbix-agent по умолчанию.
 
 ![screen6](https://github.com/KorolkovDenis/Zabbix/blob/main/Screenshots/z1/screen6.png)
@@ -62,18 +64,21 @@ Install Zabbix server, frontend, agent
 Create initial database
 
 `sudo -u postgres createuser --pwprompt zabbix`
+
 заходим из под привилегированного пользователя или root, переключаемся под пользователя postgres и выполняем команду createuser --pwprompt zabbix
 задаем пароль 123456789
 
 ![screen8](https://github.com/KorolkovDenis/Zabbix/blob/main/Screenshots/z1/screen8.png)
 
 `sudo -u postgres createdb -O zabbix zabbix`
+
 переключимся под пользователя postgres и создаем БД (-O – owner «владелец» zabbix) и zabbix (это БД)
 
 ![screen9](https://github.com/KorolkovDenis/Zabbix/blob/main/Screenshots/z1/screen9.png)
 
 Пишет, что не хватает прав, но я так понял это норм в этом случае и все создалось.
 Теперь загрузим в эту БД скрипт, который мы раннее закачали
+
 `zcat /usr/share/zabbix-sql-scripts/postgresql/server.sql.gz | sudo -u zabbix psql zabbix`
 
 ![screen10](https://github.com/KorolkovDenis/Zabbix/blob/main/Screenshots/z1/screen10.png)
@@ -83,7 +88,9 @@ Create initial database
 ![screen11](https://github.com/KorolkovDenis/Zabbix/blob/main/Screenshots/z1/screen11.png)
 
 `sudo nano /etc/zabbix/zabbix_server.conf`
+
 разкомментируем значение DBPassword и зададим его:
+
 `DBPassword=123456789`
 
 ![screen12](https://github.com/KorolkovDenis/Zabbix/blob/main/Screenshots/z1/screen12.png)
@@ -94,19 +101,21 @@ DBHost=localhost (меняем на наш путь к БД на ином сер
 ![screen13](https://github.com/KorolkovDenis/Zabbix/blob/main/Screenshots/z1/screen13.png)
 
 Перезапустим демона zabbix-server.service и проверим его работу:
+
 `systemctl restart zabbix-server.service
 systemctl status zabbix-server.service`
 
 ![screen14](https://github.com/KorolkovDenis/Zabbix/blob/main/Screenshots/z1/screen14.png)
 
 Посмотреть логи zabbix-server можно тут:
+
 `cat /var/log/zabbix/zabbix_server.log`
 
 ![screen15.0](https://github.com/KorolkovDenis/Zabbix/blob/main/Screenshots/z1/screen15.0.png)
 
 Configure PHP for Zabbix frontend (Настройка PHP для веб-интерфейса)
 
-Идем в `/etc/zabbix/nginx.conf`
+Идем в `/etc/zabbix/nginx.conf`.
 Раскомментируем параметры и назовем наш сервер
 `listen 8080;
 server_name zabbix-dendz.lan;`	(.lan – как зона для наших нужд, вместо .local)
@@ -166,23 +175,122 @@ Admin: zabbix
 
 Последовательность выполнения:
 
+Запустим ВМ с именем zabbix-agent
+IP: 192.168.43.202
 
-![screen11](https://github.com/KorolkovDenis/Zabbix-dz1/blob/main/Screen/screen11.png)
+![screen1](https://github.com/KorolkovDenis/Zabbix/blob/main/Screenshots/z2/screen1.png)
 
-Далее по инструкции с сайта устанавливаем Zabbix и другие компоненты.
+Агент Agent2 будем ставить на Ubuntu 22.04
+
+![screen2](https://github.com/KorolkovDenis/Zabbix/blob/main/Screenshots/z2/screen2.png)
+![screen3](https://github.com/KorolkovDenis/Zabbix/blob/main/Screenshots/z2/screen3.png)
+
+Install and configure Zabbix for your platform
 Install Zabbix repository
 
 wget https://repo.zabbix.com/zabbix/6.4/ubuntu/pool/main/z/zabbix-release/zabbix-release_6.4-1+ubuntu22.04_all.deb
 sudo dpkg -i zabbix-release_6.4-1+ubuntu22.04_all.deb
 sudo apt update
 
+![screen4](https://github.com/KorolkovDenis/Zabbix/blob/main/Screenshots/z2/screen4.png)
 
+Install Zabbix agent2
 
+sudo apt install zabbix-agent2 zabbix-agent2-plugin-*
 
+![screen5](https://github.com/KorolkovDenis/Zabbix/blob/main/Screenshots/z2/screen5.png)
 
+Start Zabbix agent2 process
+Перезапустим демона zabbix-agent2
+sudo systemctl restart zabbix-agent2
+sudo systemctl enable zabbix-agent2
 
+![screen6](https://github.com/KorolkovDenis/Zabbix/blob/main/Screenshots/z2/screen6.png)
 
+Вторую ВМ с 0 лениво настраивать, поэтому сделаю клон ВМ, на которую сейчас установил zabbix-agent2 и задам hostname ВМ: zabbix-agent2 (sudo nano /etc/hosts и sudo nano /etc/hostname)
 
+![screen7](https://github.com/KorolkovDenis/Zabbix/blob/main/Screenshots/z2/screen7.png)
+![screen8](https://github.com/KorolkovDenis/Zabbix/blob/main/Screenshots/z2/screen8.png)
+![screen9](https://github.com/KorolkovDenis/Zabbix/blob/main/Screenshots/z2/screen9.png)
+
+zabbix-server		192.168.43.99
+zabbix-agent		192.168.43.202
+zabbix-agent2		192.168.43.132
+
+![screen10](https://github.com/KorolkovDenis/Zabbix/blob/main/Screenshots/z2/screen10.png)
+
+zabbix-agent2 и zabbix-server запущены
+
+![screen11](https://github.com/KorolkovDenis/Zabbix/blob/main/Screenshots/z2/screen11.png)
+
+sudo apt --installed | grep zabbix		посмотреть что установлено
+
+![screen12](https://github.com/KorolkovDenis/Zabbix/blob/main/Screenshots/z2/screen12.png)
+
+Запуская наблюдение за потоком логов на ВМ-агентах:
+tail –f /var/log/zabbix/zabbix_agent2.log
+
+Добавим в hosts на сервере данные агентов
+
+![screen13](https://github.com/KorolkovDenis/Zabbix/blob/main/Screenshots/z2/screen13.png)
+![screen14](https://github.com/KorolkovDenis/Zabbix/blob/main/Screenshots/z2/screen14.png)
+![screen15](https://github.com/KorolkovDenis/Zabbix/blob/main/Screenshots/z2/screen15.png)
+![screen16](https://github.com/KorolkovDenis/Zabbix/blob/main/Screenshots/z2/screen16.png)
+![screen17](https://github.com/KorolkovDenis/Zabbix/blob/main/Screenshots/z2/screen17.png)
+
+Добавим items для хостов. Для этого можно либло выбрать уже существующие или создать свои
+
+![screen18](https://github.com/KorolkovDenis/Zabbix/blob/main/Screenshots/z2/screen18.png)
+
+Unlink and clear - 	очистить items в нашем template
+
+![screen19](https://github.com/KorolkovDenis/Zabbix/blob/main/Screenshots/z2/screen19.png)
+
+Жмем item и добавляем те, которые необходимы
+
+![screen20](https://github.com/KorolkovDenis/Zabbix/blob/main/Screenshots/z2/screen20.png)
+
+Открываем и прилинкуем к нему  Templates – linux by Zabbix agent, так мы добавим items
+
+![screen21](https://github.com/KorolkovDenis/Zabbix/blob/main/Screenshots/z2/screen21.png)
+
+Добавим наш template на наши хосты, для этого открываем zabbix-agent и в графе Templates вводим zabbix-agent-test. Так же и на втором хосте. При этом на них заработают items.
+
+![screen22](https://github.com/KorolkovDenis/Zabbix/blob/main/Screenshots/z2/screen22.png)
+![screen23](https://github.com/KorolkovDenis/Zabbix/blob/main/Screenshots/z2/screen23.png)
+![screen24](https://github.com/KorolkovDenis/Zabbix/blob/main/Screenshots/z2/screen24.png)
+
+У агентов в логах: sudo tail –f /var/log/zabbix/zabbix_agent.log
+2023/03/15 15:33:41.914913 failed to accept an incoming connection: connection from "192.168.43.99" rejected, allowed hosts: "127.0.0.1"
+2023/03/15 15:35:24.636377 failed to accept an incoming connection: connection from "192.168.43.99" rejected, allowed hosts: "127.0.0.1"
+Работает сейчас в пассивном режиме. Чтобы добавить сервер агенту в доступные (белый список) адреса, - это для пассивных проверок.
+sudo nano /etc/zabbix/zabbix_agent2.conf
+Server=127.0.0.1,192.168.43.99
+
+![screen25](https://github.com/KorolkovDenis/Zabbix/blob/main/Screenshots/z2/screen25.png)
+
+Добавим активные проверки:
+ServerActive=127.0.0.1,192.168.43.99
+
+![screen26](https://github.com/KorolkovDenis/Zabbix/blob/main/Screenshots/z2/screen26.png)
+
+После правок конфига, перезапускаем демона агента
+sudo systemctl restart zabbix-agent2.service
+sudo systemctl status zabbix-agent2.service
+
+![screen27](https://github.com/KorolkovDenis/Zabbix/blob/main/Screenshots/z2/screen27.png)
+![screen28](https://github.com/KorolkovDenis/Zabbix/blob/main/Screenshots/z2/screen28.png)
+
+Data collection - Hosts
+
+![screen29](https://github.com/KorolkovDenis/Zabbix/blob/main/Screenshots/z2/screen29.png)
+
+Monitoring – Latest data
+
+![screen30](https://github.com/KorolkovDenis/Zabbix/blob/main/Screenshots/z2/screen30.png)
+![screen31](https://github.com/KorolkovDenis/Zabbix/blob/main/Screenshots/z2/screen31.png)
+![screen32](https://github.com/KorolkovDenis/Zabbix/blob/main/Screenshots/z2/screen32.png)
+![screen33](https://github.com/KorolkovDenis/Zabbix/blob/main/Screenshots/z2/screen33.png)
 
 ---
 ## Дополнительные задания (со звездочкой*)
